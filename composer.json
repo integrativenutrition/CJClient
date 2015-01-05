@@ -1,0 +1,11 @@
+{
+   "name": "wodenx/cjclient",
+   "autoload": {
+       "psr-0": {
+           "CJClient\\": "src/"
+       }
+   },    
+   "require": {
+      "guzzlehttp/guzzle": "~5.0"
+   }
+}
