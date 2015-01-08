@@ -16,6 +16,10 @@ class Data extends CJObject {
     return $this->map;
   }
 
+  public function names() {
+    return array_keys($this->map());
+  }
+
   /**
    * Returns the value for a given name, if any.
    *
