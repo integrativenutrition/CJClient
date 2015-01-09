@@ -37,7 +37,10 @@ class Collection extends Linkset {
    *   The Template object, if one exists, or FALSE otherwise.
    */
   public function template() {
-    return isset($this->raw['template']) ? new Template($this->raw['template']) : FALSE;
+    if (!isset($this->template)) {
+      $this->template = isset($this->raw['template']) ? new Template($this->raw['template'], $this) : FALSE;
+    }
+    return $this->template;
   }
 
   /**
@@ -65,26 +68,49 @@ class Collection extends Linkset {
    * @todo If this collection specifies a template, than the keys of the posted
    * data must match the keys specified in the template.
    *
-   * @param array $data
-   *   An array of data values to be posted.
+   * @param Template $template
+   *   A completed template object containing a representation of the item.
    *
    * @return \CJClient\Collection
    *   A Collection object representing the newly created Item. Note that this
    *   Collection must be fetched before it will be fully populated. 
    */
-  public function create($data) {
-    $target = new Collection($this->href());
-    $target->response = $this->getClient()->post($this->href(), array('json' => $data, 'future' => TRUE));
+  public function create(Template $template) {
+    $target = new Collection('');
+    //$target->setClient($this->client());
+    $post = array('template' => $template->raw());
+    $target->response = $this->client()->post($this->href() . '/', array(/*'exceptions' => FALSE,*/  'json' => $post, 'future' => TRUE));
     $target->response->then(
         function($rsp) use ($target) {
+          echo "Success";
           $target->setHref($rsp->getHeader('Location'));
           $target->status = $rsp->getStatusCode();
         },
         function($ex) use ($target) {
+          echo "Failure\n";
           $target->status = $ex->getCode();
         }
     );
     return $target;
+  }
+
+  /**
+   * Get all queries, keyed by their link relation.
+   *
+   * @return array
+   *   An array of all query templates, keyed by their rel.
+   */
+  public function queries() {
+    if (!isset($this->querymap)) {
+      $this->querymap = array();
+      if (isset($this->raw['queries'])) {
+        foreach ($this->raw['queries'] as $rawquery) {
+          $query = new Query($rawquery, $this);
+          $this->querymap[$query->rel()] = $query;
+        }
+      }
+    }
+    return $this->querymap;
   }
 
   /**
@@ -102,17 +128,26 @@ class Collection extends Linkset {
    *   An array of Item objects which match the conditions.
    */
   public function items($conditions = array(), $match_all = TRUE) {
-    $items = array();
-    if (isset($this->raw['items'])) {
-      foreach ($this->raw['items'] as $rawitem) {
-        $item = new Item($rawitem, $this);
-        if (!$conditions || $item->data()->match($conditions, $match_all)) {
-          $items[] = $item;
+    if (!isset($this->items)) {
+      $this->items = array();
+      if (isset($this->raw['items'])) {
+        foreach ($this->raw['items'] as $rawitem) {
+          $this->items[] = new Item($rawitem, $this);
         }
       }
     }
- 
-    return $items;
+    if ($conditions) {
+      $items = array();
+      foreach ($this->items as $item) {
+        if ($item->data()->match($conditions, $match_all)) {
+          $items[] = $item;
+        }
+      }
+      return $items;
+    }
+    else {
+      return $this->items;
+    }
   }
 
   /**
@@ -123,5 +158,34 @@ class Collection extends Linkset {
    */
   public function version() {
     return $this->raw['version'];
+  }
+
+  /**
+   * @see \CJClient\Linkset::raw()
+   */
+  public function raw() {
+    $raw = parent::raw();
+    if ($this->template()) {
+      $raw['template'] = $this->template()->raw();
+    }
+    if ($this->items()) {
+      $raw['items'] = array();
+      foreach ($this->items() as $item) {
+        $raw['items'][] = $item->raw();
+      }
+    }
+    else {
+      unset($raw['items']);
+    }
+    if ($this->queries()) {
+      $raw['queries'] = array();
+      foreach ($this->queries() as $query) {
+        $raw['queries'][] = $query->raw();
+      }
+    }
+    else {
+      unset($raw['queries']);
+    }
+    return $raw;
   }
 }

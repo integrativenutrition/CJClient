@@ -2,6 +2,28 @@
 namespace CJClient;
 
 class Query extends Fetchable {
+  protected $data;
+
+  /**
+   * Gets the Data object in this template.
+   */
+  public function data() {
+    if (!isset($this->data)) {
+      $this->data = isset($this->raw['data']) ? new Data($this->raw['data'], $this) : FALSE;
+    }
+    return $this->data;
+  }
+
+  /**
+   * @see \CJClient\CJObject::raw()
+   */
+  public function raw() {
+    $raw = parent::raw();
+    if ($this->data()) {
+      $raw['data'] = $this->data()->raw();
+    }
+    return $raw;
+  }
 
   /**
    * Get the prompt.
@@ -34,28 +56,20 @@ class Query extends Fetchable {
   }
 
   /**
-   * Get the data for this item, if any.
-   *
-   * @return Data|bool
-   *   The Data object in this item, or FALSE if none exists.
-   */
-  public function data() {
-    return isset($this->raw['data']) ? new Data($this->raw['data']) : $this;
-  }
-  
-  /**
    * Execute a query given a set of parameters.
    *
-   * @param unknown $template
+   * @param Template $template
+   *   The filled in query template.
    * @throws CJException
    * @return \CJClient\Collection
    */
-  public function execute($data) {
-    foreach ($data as $key => $value) {
-      if (!$this->data($key)) {
-        throw new CJException('Invalid key in query template.');
+  public function execute() {
+    $data = $this->data();
+    foreach ($data->names() as $name) {
+      $value = trim($data->value($name));
+      if (!empty($value)) {
+        $query[] = "$name=$value";
       }
-      $query[] = "$key=$valye";
     }
     $fetcher = new Href($this->href() . '?' . implode('&', $query));
     return $fetcher->fetch();

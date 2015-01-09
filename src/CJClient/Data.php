@@ -30,9 +30,36 @@ class Data extends CJObject {
    *   The value string, or FALSE if not found.
    */
   public function value($name) {
-    $this->map();
-    return isset($this->map[$name]['value']) ? $this->map[$name]['value'] : FALSE;
+    return isset($this->map()[$name]['value']) ? $this->map()[$name]['value'] : FALSE;
   }
+
+  /**
+   * Sets the value of a key in this data object.
+   *
+   * @param string $name
+   *   The key to be set. This name must already exist in the data object.
+   * @param string $value
+   *   The value to set.
+   */
+  public function setValue($name, $value) {
+    $this->map();
+    if (!isset($this->map[$name])) {
+      throw new CJException('The specified data key does not exist');
+    }
+    $this->map[$name]['value'] = $value;
+  }
+
+  /**
+   * @see \CJClient\CJObject::raw()
+   */
+   public function raw() {
+    $return = array();
+    foreach ($this->map() as $name => $data) {
+      $return[] = array('name' => $name) + $data;
+    }
+    return $return;
+  }
+
 
   /**
    * Returns the prompt for a given name, if any.

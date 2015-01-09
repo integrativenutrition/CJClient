@@ -1,15 +1,54 @@
 <?php
 namespace CJClient;
 
+/**
+ * Represents any C+J object which contains links.
+ *
+ * These include Items and Collections.
+ */
 class Linkset extends Fetchable {
+  /**
+   * @var array
+   *   An array of links, keyed by their rels.
+   */
   protected $linkmap;
 
+  /**
+   * @see \CJClient\CJObject::raw()
+   */
+  public function raw() {
+    $raw = parent::raw();
+    if ($this->links()) {
+      $raw['links'] = array();
+      foreach ($this->links() as $link) {
+        $raw['links'][] = $link->raw();
+      }
+    }
+    else {
+      unset($raw['links']);
+    }
+    return $raw;
+  }
+
+  /**
+   * Follows the links identified by the specified relations.
+   *
+   * @param array $rels
+   *   An array of link relation strings.
+   *
+   * @throws CJException
+   *
+   * @return array
+   *   An array of Collection objects representing the targets of each link.
+   *   These requests may not have completed, so you must call wait() on
+   *   each to use the completed results. 
+   */
   public function followLinks(array $rels = NULL) {
     if (!isset($rels)) {
       $rels = $this->rels();
     }
     elseif (array_diff($rels, $this->rels())) {
-      throw new CJException("Relations not found");
+      throw new CJException("A link with the specified relation does not exist in this LinkSet");
     }
     $cols = array();
     foreach ($rels as $rel) {

@@ -2,13 +2,26 @@
 namespace CJClient;
 
 class Template extends CJObject {
+  protected $data;
+
   /**
-   * Get the data for this item, if any.
-   *
-   * @return Data|bool
-   *   The Data object in this item, or FALSE if none exists.
+   * Gets the Data object in this template.
    */
   public function data() {
-    return isset($this->raw['data']) ? new Data($this->raw['data']) : $this;
+    if (!isset($this->data)) {
+      $this->data = isset($this->raw['data']) ? new Data($this->raw['data'], $this) : FALSE;
+    }
+    return $this->data;
+  }
+
+  /**
+   * @see \CJClient\CJObject::raw()
+   */
+  public function raw() {
+    $raw = parent::raw();
+    if ($this->data()) {
+      $raw['data'] = $this->data()->raw();
+    }
+    return $raw;
   }
 }

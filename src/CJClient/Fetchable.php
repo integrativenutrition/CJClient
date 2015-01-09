@@ -14,6 +14,12 @@ class Fetchable extends CJObject {
   protected $response;
   protected $status = 0;
 
+  /**
+   * Construct a new Fetchable.
+   *
+   * @throws CJException
+   * @see CJObject::__construct
+   */
   public function __construct($raw, $parent) {
     if (!isset($raw['href'])) {
       throw new CJException("Missing href.");
@@ -28,13 +34,8 @@ class Fetchable extends CJObject {
    *   The Client object to use.
    */
   public function client() {
-    // @todo There should be a mechanism to inject a client with
-    // global default options.
     if (!isset($client)) {
-      $client = new Client();
-      $client->setDefaultOption('headers/Content-Type', 'application/vnd.collection+json');
-      $client->setDefaultOption('headers/Accept', 'application/vnd.collection+json');
-      $this->client = $client;
+      $this->client = CJClient::getInstance()->createGuzzleClient();
     }
     return $this->client;
   }
@@ -92,6 +93,12 @@ class Fetchable extends CJObject {
     return $target;
   }
 
+  /**
+   * Gets the http status of the last request.
+   *
+   * @return number
+   *   The http status of the last request.
+   */
   public function status() {
     return isset($this->status) ? $this->status : 0;
   }
