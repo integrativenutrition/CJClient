@@ -2,6 +2,7 @@
 namespace CJClient;
 
 use GuzzleHttp\Message\FutureResponse;
+use GuzzleHttp\Message\Response;
 
 /**
  * @class
@@ -82,13 +83,14 @@ class Collection extends Linkset {
     $target->response = $this->client()->post($this->href() . '/', array(/*'exceptions' => FALSE,*/  'json' => $post, 'future' => TRUE));
     $target->response->then(
         function($rsp) use ($target) {
-          echo "Success";
-          $target->setHref($rsp->getHeader('Location'));
+          if ($rsp->getHeader('Location')) {
+            $target->setHref($rsp->getHeader('Location'));
+          }
           $target->status = $rsp->getStatusCode();
         },
         function($ex) use ($target) {
-          echo "Failure\n";
           $target->status = $ex->getCode();
+          $target->response = $ex->getResponse();
         }
     );
     return $target;
@@ -111,6 +113,24 @@ class Collection extends Linkset {
       }
     }
     return $this->querymap;
+  }
+
+  /**
+   * Returns a clone of the query template (if any).
+   *
+   * @param string $rel
+   *   The rel of the query template to clone.
+   * @return Query|bool
+   *   A clone of the matching query template, or FALSE if none exists.
+   */
+  public function query($rel) {
+    $queries = $this->queries();
+    if (isset($queries[$rel])) {
+      return clone $queries[$rel];
+    }
+    else {
+      return FALSE;
+    }
   }
 
   /**

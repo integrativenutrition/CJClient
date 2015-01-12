@@ -1,6 +1,9 @@
 <?php
 namespace CJClient;
 
+/**
+ * Represents a Collection+JSON Data object.
+ */
 class Data extends CJObject {
   protected $map;
 
@@ -16,6 +19,12 @@ class Data extends CJObject {
     return $this->map;
   }
 
+  /**
+   * Get the names of each element in the data array.
+   *
+   * @return array
+   *   An array containing the name keys of each item in the data array.
+   */
   public function names() {
     return array_keys($this->map());
   }
@@ -59,7 +68,6 @@ class Data extends CJObject {
     }
     return $return;
   }
-
 
   /**
    * Returns the prompt for a given name, if any.

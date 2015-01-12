@@ -87,6 +87,7 @@ class Fetchable extends CJObject {
         },
         // On an error, just set the status.
         function($ex) use ($target) {
+          $target->response = $ex->getResponse();
           $target->status = $ex->getCode();
         }
     );
@@ -102,7 +103,6 @@ class Fetchable extends CJObject {
   public function status() {
     return isset($this->status) ? $this->status : 0;
   }
-
 
   /**
    * Get the href for this item.
@@ -125,6 +125,10 @@ class Fetchable extends CJObject {
       $this->raw = array();
     }
     $this->raw['href'] = $href;
+  }
+
+  public function response() {
+    return $this->response;
   }
 
 }
