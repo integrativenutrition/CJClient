@@ -72,6 +72,7 @@ class Query extends Fetchable {
       }
     }
     $fetcher = new Href($this->href() . '?' . implode('&', $query));
+    $fetcher->setClient($this->client());
     return $fetcher->fetch();
   }
 }
