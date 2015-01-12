@@ -15,9 +15,11 @@ class DefaultGuzzleClientFactory implements GuzzleClientFactory {
   public function createClient() {
     $settings = array(
     	'redirect.strict' => TRUE, // Necessary for POSTs to work with redirects.
-    	'options' => array(
-    	  'headers/Content-Type' => 'application/vnd.collection_json',
-    	  'headers/Accept' => 'application/vnd.collection_json',
+    	'defaults' => array(
+    	  'headers' => array(
+    	    'Content-Type' => 'application/vnd.collection+json',
+    	    'Accept' => 'application/vnd.collection+json',
+    	  ),
     	  'proxy' => 'http://localhost:8888',
       ),
     );

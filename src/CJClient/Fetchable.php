@@ -34,7 +34,7 @@ class Fetchable extends CJObject {
    *   The Client object to use.
    */
   public function client() {
-    if (!isset($client)) {
+    if (!isset($this->client)) {
       $this->client = CJClient::getInstance()->createGuzzleClient();
     }
     return $this->client;
