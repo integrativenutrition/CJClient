@@ -97,6 +97,24 @@ class Collection extends Linkset {
   }
 
   /**
+   * Synchronous create.
+   *
+   * This method fetches the resource at the href, and throws an exception if
+   * the return status is not 201.
+   *
+   * @throws CJException
+   * @return Collection
+   *   The Collection object containing the resource representation.
+   */
+  public function mustCreate(Template $template) {
+    $collection = $this->create($template)->wait();
+    if ($collection->status() != 201) {
+      throw new CJException('Failed to create resource at ' . $this->href() . ', Status=' . $collection->status());
+    }
+    return $collection;
+  }
+
+  /**
    * Get all queries, keyed by their link relation.
    *
    * @return array

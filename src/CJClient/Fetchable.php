@@ -95,6 +95,24 @@ class Fetchable extends CJObject {
   }
 
   /**
+   * Synchronous fetch.
+   *
+   * This method fetches the resource at the href, and throws an exception if
+   * the return status is not 200.
+   *
+   * @throws CJException
+   * @return Collection
+   *   The Collection object containing the resource representation.
+   */
+  public function mustFetch() {
+    $collection = $this->fetch()->wait();
+    if ($collection->status() != 200) {
+      throw new CJException('Failed to fetch resource at ' . $collection->href() . ', Status=' . $collection->status());
+    }
+    return $collection;
+  }
+
+  /**
    * Gets the http status of the last request.
    *
    * @return number

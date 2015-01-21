@@ -58,21 +58,48 @@ class Query extends Fetchable {
   /**
    * Execute a query given a set of parameters.
    *
-   * @param Template $template
-   *   The filled in query template.
    * @throws CJException
    * @return \CJClient\Collection
    */
   public function execute() {
+    return $this->prepareQuery()->fetch();
+  }
+
+  /**
+   * Prepare the url for this query.
+   *
+   * @return \CJClient\Href
+   *   The Fetchable href.
+   */
+  protected function prepareQuery() {
     $data = $this->data();
+    $query = array();
     foreach ($data->names() as $name) {
       $value = trim($data->value($name));
       if (!empty($value)) {
-        $query[] = "$name=$value";
+        $query[$name] = $value;
       }
     }
-    $fetcher = new Href($this->href() . '?' . implode('&', $query));
+    $url = $this->href();
+    if (!empty($query)) {
+      $url .= '?' . http_build_query($query);
+    }
+    echo $url . "\n";
+    $fetcher = new Href($url);
     $fetcher->setClient($this->client());
-    return $fetcher->fetch();
+    return $fetcher;
+  }
+
+  /**
+   * Synchronous query execution.
+   *
+   * @throws CJException
+   *   If there is an error executing the query.
+   *
+   *
+   * @return \CJClient\Collection>
+   */
+  public function mustExecute() {
+    return $this->prepareQuery()->mustFetch();    
   }
 }
