@@ -71,7 +71,7 @@ class Data extends CJObject implements \ArrayAccess {
   public function setValue($name, $value) {
     $this->map();
     if (!isset($this->map[$name])) {
-      throw new CJException('The specified data key does not exist');
+      throw new CJException('The specified data key ' . $name . ' does not exist');
     }
     $this->map[$name]['value'] = $value;
   }
