@@ -4,8 +4,26 @@ namespace CJClient;
 /**
  * Represents a Collection+JSON Data object.
  */
-class Data extends CJObject {
+class Data extends CJObject implements \ArrayAccess {
   protected $map;
+
+  public function offsetExists($offset) {
+    $this->map();
+    return array_key_exists($offset, $this->map);
+  }
+
+  public function offsetGet($offset) {
+    return $this->value($offset);
+  }
+
+  public function offsetSet($offset, $value) {
+    $this->setValue($offset, $value);
+  }
+
+  public function offsetUnset($offset) {
+    $this->map();
+    unset($this->map[$offset]);
+  }
 
   /*
    * Builds a map of the raw data, keyed by name.
