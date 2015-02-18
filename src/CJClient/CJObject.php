@@ -47,4 +47,14 @@ class CJObject {
   public function raw() {
     return $this->raw;
   }
+
+  /**
+   * Set the raw data for this object.
+   *
+   * @param array $raw
+   *   The raw data as received from the server and converted to an array.
+   */
+  public function setRaw($raw) {
+    $this->raw = $raw;
+  }
 }

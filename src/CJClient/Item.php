@@ -29,4 +29,9 @@ class Item extends Linkset {
     }
     return $raw;
   }
+
+  public function setRaw($raw) {
+    parent::setRaw($raw);
+    unset($this->data);
+  }
 }

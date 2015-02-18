@@ -26,6 +26,14 @@ class Query extends Fetchable {
   }
 
   /**
+   * @see \CJClient\CJObject::setRaw()
+   */
+  public function setRaw($raw) {
+    parent::setRaw($raw);
+    unset($this->data);
+  }
+
+  /**
    * Get the prompt.
    *
    * @return string|boolean
@@ -84,7 +92,6 @@ class Query extends Fetchable {
     if (!empty($query)) {
       $url .= '?' . http_build_query($query);
     }
-    echo $url . "\n";
     $fetcher = new Href($url);
     $fetcher->setClient($this->client());
     return $fetcher;

@@ -3,6 +3,7 @@ namespace CJClient;
 use GuzzleHttp\Client;
 use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Message\Request;
 
 /**
  * @class
@@ -51,6 +52,54 @@ class Fetchable extends CJObject {
   }
 
   /**
+   * Initiate an asynchronous http request to the href of this object.
+   *
+   * @param string $method
+   *   The request method ('get', 'post' or 'put')
+   * @param array $options
+   *   The guzzle options for this request.
+   *
+   * @return \CJClient\Collection
+   *   The collection returned. Since this request is asynchronous, you
+   *   must call the collections wait() method to wait for the Request
+   *   to complete before attempting to use the collection.
+   */
+  public function request($method, $options) {
+    if ($this instanceof Collection) {
+      $target = $this;
+    }
+    else {
+      $target = new Collection($this->href());
+      // Pass along our client.
+      $target->setClient($this->client());
+    }
+    // Reset the status.
+    $target->status = 0;
+    // Initiate the request.
+    $target->response = $target->client()->{$method}($target->href(), $options);
+    $target->response->then(
+        function($rsp) use ($target, $method) {
+          if ($method == 'post' && $location = $rsp->getHeader('Location')) {
+            $target->setHref($location);
+          }
+          try {
+            // If we get a json response, then parse it, but don't panic if not.
+            $json = $rsp->json();
+            if (isset($json['collection'])) {
+              $target->raw = $json['collection'];
+            }
+          } catch(\Exception $e) {} 
+          $target->status = $rsp->getStatusCode();
+        },
+        function($ex) use ($target) {
+          $target->status = $ex->getCode();
+          $target->response = $ex->getResponse();
+        }
+    );
+    return $target;
+  }
+
+  /**
    * Retrieve the collection located at the href of this Fetchable.
    *
    * If this fetchable is a Collection, the contents are refreshed
@@ -66,32 +115,7 @@ class Fetchable extends CJObject {
    *   href once the request completes.
    */
   public function fetch() {
-    if ($this instanceof Collection) {
-      $target = $this;
-    }
-    else {
-      $target = new Collection($this->href());
-      // Pass along our client.
-      $target->setClient($this->client());
-    }
-    // Reset the status.
-    $target->status = 0;
-    // Initiate the request.
-    $target->response = $target->client()->get($target->href(), array('future' => TRUE));
-    $target->response->then(
-        // On a successful response, set the raw data and response status.
-        function($rsp) use ($target) {
-          $raw = $rsp->json();
-          $target->raw = $raw['collection'];
-          $target->status = $rsp->getStatusCode();
-        },
-        // On an error, just set the status.
-        function($ex) use ($target) {
-          $target->response = $ex->getResponse();
-          $target->status = $ex->getCode();
-        }
-    );
-    return $target;
+    return $this->request('get', array('future' => TRUE));
   }
 
   /**

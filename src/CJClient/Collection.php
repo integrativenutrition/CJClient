@@ -10,21 +10,21 @@ use GuzzleHttp\Message\Response;
  * Represents a Collection+JSON Collection.
  */
 class Collection extends Linkset {
+  protected $template;
+  protected $queries;
+  protected $items;
+  protected $links;
+
   /**
    * Waits for pending requests for a list of Collections.
    *
    * @param array $collections
    *   An array of Collection objects to wait for.
-   *
-   * @return array
-   *   An array of status codes for each of the requests.
    */
   public static function waitForAll(array $collections) {
-    $statuses = array();
-    foreach ($fetchables as $fetchable) {
-    	$statuses[] = $fetchable->wait()->status();
+    foreach ($collections as $collection) {
+    	$collection->wait();
     }    
-    return $statuses;
   }
 
   public function __construct($href) {
@@ -59,59 +59,6 @@ class Collection extends Linkset {
       $this->status = $e->getCode();
     }
     return $this;
-  }
-
-  /**
-   * Creates a new item in this Collection.
-   *
-   * This method issues a POST to the href of the collection.
-   *
-   * @todo If this collection specifies a template, than the keys of the posted
-   * data must match the keys specified in the template.
-   *
-   * @param Template $template
-   *   A completed template object containing a representation of the item.
-   *
-   * @return \CJClient\Collection
-   *   A Collection object representing the newly created Item. Note that this
-   *   Collection must be fetched before it will be fully populated. 
-   */
-  public function create(Template $template) {
-    $target = new Collection('');
-    //$target->setClient($this->client());
-    $post = array('template' => $template->raw());
-    $target->response = $this->client()->post($this->href() . '/', array(/*'exceptions' => FALSE,*/  'json' => $post, 'future' => TRUE));
-    $target->response->then(
-        function($rsp) use ($target) {
-          if ($rsp->getHeader('Location')) {
-            $target->setHref($rsp->getHeader('Location'));
-          }
-          $target->status = $rsp->getStatusCode();
-        },
-        function($ex) use ($target) {
-          $target->status = $ex->getCode();
-          $target->response = $ex->getResponse();
-        }
-    );
-    return $target;
-  }
-
-  /**
-   * Synchronous create.
-   *
-   * This method fetches the resource at the href, and throws an exception if
-   * the return status is not 201.
-   *
-   * @throws CJException
-   * @return Collection
-   *   The Collection object containing the resource representation.
-   */
-  public function mustCreate(Template $template) {
-    $collection = $this->create($template)->wait();
-    if ($collection->status() != 201) {
-      throw new CJException('Failed to create resource at ' . $this->href() . ', Status=' . $collection->status());
-    }
-    return $collection;
   }
 
   /**
@@ -189,6 +136,43 @@ class Collection extends Linkset {
   }
 
   /**
+   * Set the items array.
+   *
+   * @param array $items
+   *   An array of Item objects to set.
+   *
+   * @return Collection
+   *   This collection object.
+   */
+  public function setItems(array $items) {
+    foreach ($items as $item) {
+      if (!$item instanceof Item) {
+        throw new CJException('Attempt to set a non-item.');
+      }
+    }
+    $this->items = $items;
+    return $this;
+  }
+
+  /**
+   * Filter out items which do not match a set of conditions.
+   *
+   * @param array $conditions
+   *   Optional. A set of key value pairs. If specified, Only items which
+   *   contain matching data elements will be returned.
+   * @param bool $match_all
+   *   If TRUE (default), all conditions must be met. Otherwise, any.
+   *
+   * @return Collection
+   *   This collection object.
+   */
+  public function filterItems($conditions, $match_all = TRUE) {
+    $this->setItems($this->items($conditions, $match_all));
+    return $this;
+  }
+
+
+  /**
    * Get the version of this Collection.
    *
    * @return number
@@ -196,6 +180,17 @@ class Collection extends Linkset {
    */
   public function version() {
     return $this->raw['version'];
+  }
+
+  /**
+   * @see \CJClient\CJObject::setRaw()
+   */
+  public function setRaw($raw) {
+    $this->raw = $raw;
+    unset($this->items);
+    unset($this->queries);
+    unset($this->links);
+    unset($this->items);
   }
 
   /**
@@ -226,4 +221,7 @@ class Collection extends Linkset {
     }
     return $raw;
   }
+
+
+
 }

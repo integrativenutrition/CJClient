@@ -67,6 +67,9 @@ class Data extends CJObject implements \ArrayAccess {
    *   The key to be set. This name must already exist in the data object.
    * @param string $value
    *   The value to set.
+   *
+   * @throws CJException
+   *   If a key value does not exist in the data object.
    */
   public function setValue($name, $value) {
     $this->map();
@@ -77,12 +80,27 @@ class Data extends CJObject implements \ArrayAccess {
   }
 
   /**
+   * Convenience method to set multiple values.
+   *
+   * @param array $values
+   *   An array of key value pairs to set.
+   *
+   * @throws CJException
+   *   If a key value does not exist in the data object.
+   */
+  public function set(array $values) {
+    foreach ($values as $name => $value) {
+      $this->setValue($name, $value);
+    }
+  }
+
+  /**
    * @see \CJClient\CJObject::raw()
    */
    public function raw() {
     $return = array();
     foreach ($this->map() as $name => $data) {
-      $return[] = array('name' => $name) + $data;
+      $return[] = array('name' => $name) + array_filter($data);
     }
     return $return;
   }
