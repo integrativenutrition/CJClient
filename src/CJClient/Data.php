@@ -85,13 +85,21 @@ class Data extends CJObject implements \ArrayAccess {
    * @param array $values
    *   An array of key value pairs to set.
    *
+   * @return boolean
+   *   Whether or not any properties were modified.
+   *
    * @throws CJException
    *   If a key value does not exist in the data object.
    */
   public function set(array $values) {
+    $modified = FALSE;
     foreach ($values as $name => $value) {
-      $this->setValue($name, $value);
+      if ($value != $this->value($name)) {
+        $modified = TRUE;
+        $this->setValue($name, $value);
+      }
     }
+    return $modified;
   }
 
   /**
