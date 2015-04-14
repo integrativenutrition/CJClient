@@ -20,7 +20,6 @@ class DefaultGuzzleClientFactory implements GuzzleClientFactory {
     	    'Content-Type' => 'application/vnd.collection+json',
     	    'Accept' => 'application/vnd.collection+json',
     	  ),
-    	  'proxy' => 'http://localhost:8888',
       ),
     );
     $client = new Client($settings);
